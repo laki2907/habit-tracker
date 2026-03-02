@@ -73,3 +73,49 @@ func GetByIdHandler(c *fiber.Ctx) error {
 	return c.JSON(habit)
 
 }
+func UpdateHabitHandler(c *fiber.Ctx) error {
+	//get id from the url & conversion to integer
+	idParam := c.Params("id")
+	idInt, err := strconv.Atoi(idParam)
+	if err != nil || idInt < 0 {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "Invalid Id",
+		})
+	}
+
+	//taking the body (from the request)
+	type Request struct {
+		Name string `json:"name"`
+		//can add more fields if we want later
+	}
+	var req Request
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid  JSON body ",
+		})
+	}
+
+	//Fetching the existing habit in that id
+	var habit models.Habit
+	if err := config.DB.First(&habit, idInt).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(404).JSON(fiber.Map{
+				"error": "Habit not found",
+			})
+		}
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Database error",
+		})
+	}
+	//update fields in habit object
+	habit.Name = req.Name
+
+	//save to DB
+	if err := config.DB.Save(&habit).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Not able to update in DB",
+		})
+	}
+
+	return c.JSON(habit)
+}
