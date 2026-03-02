@@ -119,3 +119,37 @@ func UpdateHabitHandler(c *fiber.Ctx) error {
 
 	return c.JSON(habit)
 }
+func DeleteHabitHandler(c *fiber.Ctx) error {
+	//get the id u want to del from param and typecast
+	IdParam := c.Params("id")
+	IdInt, err := strconv.Atoi(IdParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid habit Id",
+		})
+	}
+	//Get the habit frm the particular id
+	var habit models.Habit
+	if err := config.DB.First(&habit, IdInt).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Habit not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Database error",
+		})
+	}
+
+	//del from DB
+	if err := config.DB.Delete(&habit, IdInt).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Was not able to delete habit",
+		})
+	}
+	return c.JSON(fiber.Map{
+		"message": "Deleted sucessfully",
+		"id":      habit.ID,
+	})
+
+}
