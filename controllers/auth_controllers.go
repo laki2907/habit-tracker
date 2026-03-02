@@ -3,8 +3,10 @@ package controllers
 import (
 	"habit-tracker/config"
 	"habit-tracker/models"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func AddHabitHandler(c *fiber.Ctx) error {
@@ -41,4 +43,33 @@ func GetAllHabitsHandler(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(habits) //converts slice into json array and gives it back to the user
+}
+func GetByIdHandler(c *fiber.Ctx) error {
+	//read the id from the url
+	idParam := c.Params("id")
+
+	//conv the id to int
+	idInt, err := strconv.Atoi(idParam)
+	if err != nil || idInt < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid habit id",
+		})
+	}
+
+	//query DB
+	var habit models.Habit
+	if err := config.DB.First(&habit, idInt).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(404).JSON(fiber.Map{
+				"error": "Habit not found",
+			})
+		}
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Database error",
+		})
+	}
+
+	//returning the habit of desired id
+	return c.JSON(habit)
+
 }
