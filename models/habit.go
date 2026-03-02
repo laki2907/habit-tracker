@@ -6,7 +6,7 @@ import "gorm.io/gorm"
 type Habit struct{
 	gorm.Model
 	Name string
-	Status string
+	Streak int
 	
 
 }

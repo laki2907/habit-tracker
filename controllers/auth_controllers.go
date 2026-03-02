@@ -1,23 +1,44 @@
 package controllers
 
 import (
-	"fmt"
 	"habit-tracker/config"
 	"habit-tracker/models"
-	"log"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-func AddHabit(name string) {
+func AddHabitHandler(c *fiber.Ctx) error {
+	type Request struct {
+		Name string `json:"name"`
+	}
+
+	var req Request
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid input",
+		})
+	}
 	habit := models.Habit{
-		Name:   name,
-		Status: "pending",
+		Name:   req.Name,
+		Streak: 0,
 	}
 
-	result := config.DB.Create(&habit)
-	if result.Error != nil {
-		log.Fatal("Error inserting habit", result.Error)
-		return //helps in exiting if error found instead of continuing
+	if err := config.DB.Create(&habit).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Could not create a habit",
+		})
 	}
-	fmt.Println("Habit added successfully ID: ", habit.ID)
+	return c.JSON(habit)
+}
 
+func GetAllHabitsHandler(c *fiber.Ctx) error {
+	var habits []models.Habit //creating an empty slice
+
+	if err := config.DB.Find(&habits).Error; err != nil { //config.DB.Find() returns a DB object so to acess only the error val we use .Error
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Could not fetch items",
+		})
+	}
+	return c.JSON(habits) //converts slice into json array and gives it back to the user
 }

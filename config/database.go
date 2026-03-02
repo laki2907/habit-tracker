@@ -39,6 +39,5 @@ func ConnectDB() {
 	if err != nil {
 		log.Fatal("Failed to migrate table: ", err)
 	}
-	fmt.Println("Habit table migrated successfully!")
 
 }
