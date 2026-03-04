@@ -34,10 +34,14 @@ func AddHabitHandler(c *fiber.Ctx) error {
 	return c.JSON(habit)
 }
 
-// GET
+// GETALL
 func GetAllHabitsHandler(c *fiber.Ctx) error {
 
-	habits, err := services.GetAllHabits()
+	//c.QueryInt fetches val from the url param converts the string into int
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 10)
+
+	habits, err := services.GetAllHabits(page, limit)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Not ablle to fetch habits",
@@ -103,7 +107,6 @@ func DeleteHabitHandler(c *fiber.Ctx) error {
 			"error": "Invalid habit Id",
 		})
 	}
-
 
 	err = services.Deletehabit(IdInt)
 

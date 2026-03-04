@@ -22,10 +22,27 @@ func CreateHabit(name string) (models.Habit, error) {
 
 }
 
-func GetAllHabits() ([]models.Habit, error) {
+func GetAllHabits(page int, limit int) ([]models.Habit, error) {
+	
+	//incase of negative or 0 page or limit values
+	if page < 1 {
+		page = 1
+	}
 
+	if limit < 1 {
+		limit = 10
+	}
+	//offset --> how many records we want to skip / from which habit u want to fetch
+	offset := (page - 1) * limit
+
+	//creating a slice which can contain several habits
 	var habits []models.Habit
-	if err := config.DB.Find(&habits).Error; err != nil {
+
+	err := config.DB.
+		Limit(limit).
+		Offset(offset).
+		Find(&habits).Error
+	if err != nil {
 		return nil, err
 	}
 
