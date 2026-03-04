@@ -13,6 +13,9 @@ func main() {
 
 	app := fiber.New() //we are creating a HTTP server
 	app.Post("/habits", controllers.AddHabitHandler)
+	app.Get("/habits", controllers.GetAllHabitsHandler)
+	app.Get("/habits/:id", controllers.GetByIdHandler)
+	app.Put("/habits/:id", controllers.UpdateHabitHandler)
+	app.Delete("/habits/:id", controllers.DeleteHabitHandler)
 	app.Listen(":3000")
-
 }
