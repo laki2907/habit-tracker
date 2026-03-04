@@ -40,4 +40,6 @@ func ConnectDB() {
 		log.Fatal("Failed to migrate table: ", err)
 	}
 
+	DB.AutoMigrate(&models.Habit{},&models.HabitCompletion{})
+	
 }

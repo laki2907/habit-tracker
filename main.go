@@ -17,5 +17,6 @@ func main() {
 	app.Get("/habits/:id", controllers.GetByIdHandler)
 	app.Put("/habits/:id", controllers.UpdateHabitHandler)
 	app.Delete("/habits/:id", controllers.DeleteHabitHandler)
+	app.Post("/habits/:id/completed", controllers.CompletedHabitController)
 	app.Listen(":3000")
 }
