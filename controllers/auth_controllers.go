@@ -2,128 +2,54 @@ package controllers
 
 import (
 	"habit-tracker/services"
-	"strconv"
 
-	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
+	"github.com/gofiber/fiber/v2" //fiber framework --> c *Ctx : context of the current request
 )
 
-// POST
-func AddHabitHandler(c *fiber.Ctx) error {
-
-	type Request struct {
-		Name string `json:"name"`
+func RegisterHandler(c *fiber.Ctx) error {
+	type Req struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
-	var req Request
-
+	//fetching the JSON body sent by the client and storing it in req
+	var req Req
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid Input!",
+		})
+	}
+	//next call the service layer
+	//if there is any problem in the service layer then an internal server error will be sent
+	user, err := services.RegisterUser(req.Name, req.Email, req.Password)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Could not register",
+		})
+	}
+	return c.Status(201).JSON(user)
+
+}
+func LoginHandler(c *fiber.Ctx) error {
+	type Req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req Req
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{ //400--> bad request
 			"error": "Invalid input",
 		})
+
 	}
-
-	habit, err := services.CreateHabit(req.Name)
-
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"error": "Could not create habit",
+	token, err := services.LoginUser(req.Email, req.Password)
+	if err != nil { //401-->Unauthourized
+		return c.Status(401).JSON(fiber.Map{
+			"error": "Invalid credentials",
 		})
+
 	}
-
-	return c.JSON(habit)
-}
-
-// GETALL
-func GetAllHabitsHandler(c *fiber.Ctx) error {
-
-	//c.QueryInt fetches val from the url param converts the string into int
-	page := c.QueryInt("page", 1)
-	limit := c.QueryInt("limit", 10)
-
-	habits, err := services.GetAllHabits(page, limit)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"error": "Not ablle to fetch habits",
-		})
-	}
-	return c.JSON(habits) //converts slice into json array and gives it back to the user
-}
-
-// GetBYID
-func GetByIdHandler(c *fiber.Ctx) error {
-	//read the id from the url
-	idParam := c.Params("id")
-
-	//conv the id to int
-	idInt, err := strconv.Atoi(idParam)
-	if err != nil || idInt < 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid habit id",
-		})
-	}
-
-	habit, err := services.GetHabitByID(idInt)
-
-	//returning the habit of desired id
-	return c.JSON(habit)
-
-}
-
-// PUT
-func UpdateHabitHandler(c *fiber.Ctx) error {
-
-	//get id from the url & conversion to integer
-	idParam := c.Params("id")
-	idInt, err := strconv.Atoi(idParam)
-	if err != nil || idInt < 0 {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "Invalid Id",
-		})
-	}
-
-	//taking the body (from the request)
-	type Request struct {
-		Name string `json:"name"`
-		//can add more fields if we want later
-	}
-	var req Request
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Invalid  JSON body ",
-		})
-	}
-	habits, err := services.UpdateHabit(idInt, req.Name)
-	return c.JSON(habits)
-}
-
-// DELETE
-func DeleteHabitHandler(c *fiber.Ctx) error {
-	//get the id u want to del from param and typecast
-	IdParam := c.Params("id")
-	IdInt, err := strconv.Atoi(IdParam)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid habit Id",
-		})
-	}
-
-	err = services.Deletehabit(IdInt)
-
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return c.Status(404).JSON(fiber.Map{
-				"error": "Habit not found",
-			})
-		}
-		return c.Status(500).JSON(fiber.Map{
-			"error": "Databbase error",
-		})
-	}
-
-	//if error is nil then this return stmnt works
-	return c.JSON(fiber.Map{
-		"message": "Deleted sucessfully",
-	})
+	return c.JSON(fiber.Map{"token": token})
 
 }

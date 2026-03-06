@@ -35,11 +35,8 @@ func ConnectDB() {
 	DB = db
 	fmt.Println("DB connection successful ! ")
 
-	err = DB.AutoMigrate(&models.Habit{})
+	err = DB.AutoMigrate(&models.Habit{}, &models.HabitCompletion{}, &models.User{})
 	if err != nil {
 		log.Fatal("Failed to migrate table: ", err)
 	}
-
-	DB.AutoMigrate(&models.Habit{},&models.HabitCompletion{})
-	
 }
