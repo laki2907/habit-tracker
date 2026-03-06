@@ -13,13 +13,6 @@ func main() {
 	config.ConnectDB()
 
 	app := fiber.New() //we are creating a HTTP server
-	app.Post("/habits", controllers.AddHabitHandler)
-	app.Get("/habits", controllers.GetAllHabitsHandler)
-	app.Get("/habits/:id", controllers.GetByIdHandler)
-	app.Put("/habits/:id", controllers.UpdateHabitHandler)
-	app.Delete("/habits/:id", controllers.DeleteHabitHandler)
-	app.Post("/habits/:id/completed", controllers.CompletedHabitController)
-	app.Listen(":3000")
 	//jWT
 	app.Post("/auth/register", controllers.RegisterHandler)
 	app.Post("/auth/login", controllers.LoginHandler)
@@ -27,7 +20,15 @@ func main() {
 	//grouping--> groups the routes that share the same base path & the same middleware
 	protected := app.Group("/api", middlewares.Protected())
 
+	//All req must pass through the JWTmiddleware first
+
 	protected.Get("/habits", controllers.GetAllHabitsHandler)
 	protected.Post("/habits", controllers.AddHabitHandler)
+	protected.Get("/habits/:id", controllers.GetByIdHandler)
+	protected.Put("/habits/:id", controllers.UpdateHabitHandler)
+	protected.Delete("/habits/:id", controllers.DeleteHabitHandler)
 	protected.Post("/habits/:id/complete", controllers.CompletedHabitController)
+	//Starting the server
+	app.Listen(":3000")
+
 }
